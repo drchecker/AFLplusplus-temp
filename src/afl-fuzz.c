@@ -1997,6 +1997,7 @@ int main(int argc, char **argv_orig, char **envp) {
     afl->clean_trace_custom = ck_realloc(afl->clean_trace_custom, map_size);
     afl->first_trace = ck_realloc(afl->first_trace, map_size);
     afl->map_tmp_buf = ck_realloc(afl->map_tmp_buf, map_size);
+    afl->fsrv.prev_input_trace_bits = ck_realloc(afl->fsrv.prev_input_trace_bits, map_size);
 
   }
 
@@ -2018,7 +2019,7 @@ int main(int argc, char **argv_orig, char **envp) {
     }
 
     u32 new_map_size = afl_fsrv_get_mapsize(
-        &afl->fsrv, afl->argv, &afl->stop_soon, afl->afl_env.afl_debug_child);
+        &afl->fsrv, afl->argv, &afl->stop_soon, afl->afl_env.afl_debug_child) * 2;
 
     // only reinitialize if the map needs to be larger than what we have.
     if (map_size < new_map_size) {
@@ -2036,6 +2037,7 @@ int main(int argc, char **argv_orig, char **envp) {
           ck_realloc(afl->clean_trace_custom, new_map_size);
       afl->first_trace = ck_realloc(afl->first_trace, new_map_size);
       afl->map_tmp_buf = ck_realloc(afl->map_tmp_buf, new_map_size);
+      afl->fsrv.prev_input_trace_bits = ck_realloc(afl->fsrv.prev_input_trace_bits, new_map_size);
 
       afl_fsrv_kill(&afl->fsrv);
       afl_shm_deinit(&afl->shm);
@@ -2079,7 +2081,7 @@ int main(int argc, char **argv_orig, char **envp) {
 
     u32 new_map_size =
         afl_fsrv_get_mapsize(&afl->cmplog_fsrv, afl->argv, &afl->stop_soon,
-                             afl->afl_env.afl_debug_child);
+                             afl->afl_env.afl_debug_child) * 2;
 
     // only reinitialize when it needs to be larger
     if (map_size < new_map_size) {
@@ -2106,6 +2108,7 @@ int main(int argc, char **argv_orig, char **envp) {
       map_size = new_map_size;
 
       setenv("AFL_NO_AUTODICT", "1", 1);  // loaded already
+      afl->fsrv.prev_input_trace_bits = ck_realloc(afl->fsrv.prev_input_trace_bits, new_map_size);
       afl->fsrv.trace_bits =
           afl_shm_init(&afl->shm, new_map_size, afl->non_instrumented_mode);
       afl->cmplog_fsrv.trace_bits = afl->fsrv.trace_bits;

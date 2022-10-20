@@ -41,7 +41,7 @@
    map seen so far is the xlsx fuzzer for libreoffice which is 5MB.
    At runtime this value can be overriden via AFL_MAP_SIZE.
    Default: 8MB (defined in bytes) */
-#define DEFAULT_SHMEM_SIZE (8 * 1024 * 1024)
+#define DEFAULT_SHMEM_SIZE (8 * 1024 * 1024 * 2)
 
 /* Default file permission umode when creating files (default: 0600) */
 #define DEFAULT_PERMISSION 0600
@@ -439,7 +439,7 @@
    after changing this - otherwise, SEGVs may ensue. */
 
 #define MAP_SIZE_POW2 16
-#define MAP_SIZE (1U << MAP_SIZE_POW2)
+#define MAP_SIZE (1U << (MAP_SIZE_POW2+1))
 
 /* Maximum allocator request size (keep well under INT_MAX): */
 

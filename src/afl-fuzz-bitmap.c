@@ -448,6 +448,26 @@ void write_crash_readme(afl_state_t *afl) {
 
 }
 
+static void compute_tcp_fuzz_coverage(afl_forkserver_t *fsrv) {
+  u32 i, j;
+  u32 branch_trans_idx = fsrv->map_size / 2;
+  u8 *backup_buff = ck_realloc(NULL, fsrv->map_size);
+  if (unlikely(!backup_buff)) { PFATAL("%s: Failed to allocate memory to backup buff.", __func__); }
+
+  // back up the current coverage.
+  memcpy(backup_buff, fsrv->trace_bits, fsrv->map_size);
+
+  // perform subtraction and update trace_bits.
+  for (i = branch_trans_idx, j = 0; i < fsrv->map_size; i++, j++) {
+    fsrv->trace_bits[i] = fsrv->trace_bits[j] - fsrv->prev_input_trace_bits[j];
+  }
+
+  // now, save the current coverage as previous coverage
+  memcpy(fsrv->prev_input_trace_bits, backup_buff, fsrv->map_size);
+
+  ck_free(backup_buff);
+}
+
 /* Check if the result of an execve() during routine fuzzing is interesting,
    save or queue the input test case for further analysis if so. Returns 1 if
    entry is saved, 0 otherwise. */
@@ -463,6 +483,9 @@ save_if_interesting(afl_state_t *afl, void *mem, u32 len, u8 fault) {
   s32 fd;
   u64 cksum = 0;
 
+  // lets classify the count.
+  classify_counts(&afl->fsrv);
+  compute_tcp_fuzz_coverage(&afl->fsrv);
   /* Update path frequency. */
 
   /* Generating a hash on every input is super expensive. Bad idea and should
